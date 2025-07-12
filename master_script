@@ -1,0 +1,7 @@
+library(parallel)
+scripts <- list.files(path = ".", pattern = "\\.r$", full.names = TRUE)
+filtered_scripts <- scripts[grepl("CS|ppk23", scripts, ignore.case = TRUE)]
+mclapply(filtered_scripts, function(script) {
+    cat("Running:", script, "\n")
+    system(paste("Rscript", script)) # Run the script in a separate R process
+}, mc.cores = 1)
