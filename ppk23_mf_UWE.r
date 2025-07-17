@@ -1,4 +1,3 @@
-# setwd("W:/apalaci/code/MSI_paper/r_glm_scripts")
 library(glmmTMB)
 
 # parameters
@@ -6,13 +5,13 @@ accepted_led <- c(0, 0.02, 0.16)
 analysis_type <- "log" # 'categorical', 'led', 'log'
 
 # load data
-soc.data <- read.csv(file = "dat/paper_Rdf_ppk23_mf_SH.csv", header = T, stringsAsFactors = T)
+soc.data <- read.csv(file = "dat/ppk23_annotated.csv", header = T, stringsAsFactors = T)
 
-# select non-NA and corresponding sex
-soc.data <- subset(soc.data, (!is.na(soc.data$interaction_index)) & (soc.data$sex_target == "female") & (soc.data$led_intensity %in% accepted_led))
+# select corresponding conditions and exclude NaNs
+soc.data <- subset(soc.data, (!is.na(soc.data$UWE)) & (soc.data$sex_target == "female") & (soc.data$led_intensity %in% accepted_led))
 
 # substitute zeros with small number to avoid mathematical errors later
-soc.data$interaction_index <- ifelse(soc.data$interaction_index == 0, 0.00001, soc.data$interaction_index)
+soc.data$UWE <- ifelse(soc.data$UWE == 0, 0.00001, soc.data$UWE)
 
 # analysis type, how to take led intensity in the model
 if (analysis_type == "log") {
@@ -27,11 +26,15 @@ if (analysis_type == "led") {
 }
 
 # model definitions and training
-null.soc <- glmmTMB(interaction_index ~ 1, data = soc.data, family = beta_family)
-red.soc <- glmmTMB(interaction_index ~ led_intensity + playlist, data = soc.data, family = beta_family)
-full.soc <- glmmTMB(interaction_index ~ led_intensity * playlist, data = soc.data, family = beta_family)
+null.soc <- glmmTMB(UWE ~ 1, data = soc.data, family = beta_family)
+red.soc <- glmmTMB(UWE ~ led_intensity + playlist, data = soc.data, family = beta_family)
+full.soc <- glmmTMB(UWE ~ led_intensity * playlist, data = soc.data, family = beta_family)
 # model selection
-write.csv(as.data.frame(anova(null.soc, red.soc, full.soc, test = "Chisq")), "res/ppk23single_females_interaction_index_chisq.csv")
+model_selection <- as.data.frame(anova(null.soc, red.soc, full.soc, test = "Chisq"))
+model_selection$strain <- "ppk23"
+model_selection$y <- "UWE"
+model_selection$analysis <- "simple"
+write.csv(model_selection, "res/ppk23_females_UWE_chisq.csv")
 
 # coefficient tables
 null_df <- as.data.frame(summary(null.soc)$coefficients$cond)
@@ -50,4 +53,7 @@ full_df$names <- row.names(full_df)
 row.names(full_df) <- NULL
 
 combined_df <- rbind(null_df, red_df, full_df)
-write.csv(combined_df, "res/ppk23single_females_interaction_index_coeffs_table.csv")
+combined_df$strain <- "ppk23"
+combined_df$y <- "UWE"
+combined_df$analysis <- "simple"
+write.csv(combined_df, "res/ppk23_females_UWE_coeffs.csv")

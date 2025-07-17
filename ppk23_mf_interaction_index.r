@@ -1,7 +1,7 @@
 library(glmmTMB)
 
 # parameters
-accepted_playlist <- c("silence", "IPI16", "IPI36", "IPI96")
+accepted_playlist <- c("silence", "IPI36") #
 accepted_led <- c(0, 0.02, 0.16)
 analysis_type <- "log" # 'categorical', 'led', 'log'
 
@@ -9,7 +9,7 @@ analysis_type <- "log" # 'categorical', 'led', 'log'
 soc.data <- read.csv(file = "dat/ppk23_all.csv", header = T, stringsAsFactors = T)
 
 # select corresponding conditions and exclude NaNs
-soc.data <- subset(soc.data, (!is.na(soc.data$interaction_index)) & (soc.data$sex_target == "female") & (soc.data$playlist %in% accepted_playlist) & (soc.data$led_intensity %in% accepted_led))
+soc.data <- subset(soc.data, (!is.na(soc.data$interaction_index)) & (soc.data$sex_target == "female") & (soc.data$playlist %in% accepted_playlist) & (soc.data$led_intensity %in% accepted_led)) #
 
 # substitute zeros with small number to avoid mathematical errors later
 soc.data$interaction_index <- ifelse(soc.data$interaction_index == 0, 0.00001, soc.data$interaction_index)
@@ -38,8 +38,8 @@ full.soc <- glmmTMB(interaction_index ~ led_intensity * playlist, data = soc.dat
 model_selection <- as.data.frame(anova(null.soc, red.soc, full.soc, test = "Chisq"))
 model_selection$strain <- "ppk23"
 model_selection$y <- "interaction_index"
-model_selection$analysis <- "IPIs"
-write.csv(model_selection, "res/ppk23IPIs_females_interaction_index_chisq.csv")
+model_selection$analysis <- "simple"
+write.csv(model_selection, "res/ppk23_females_interaction_index_chisq.csv")
 
 # coefficient tables
 null_df <- as.data.frame(summary(null.soc)$coefficients$cond)
@@ -60,5 +60,5 @@ row.names(full_df) <- NULL
 combined_df <- rbind(null_df, red_df, full_df)
 combined_df$strain <- "ppk23"
 combined_df$y <- "interaction_index"
-combined_df$analysis <- "IPIs"
-write.csv(combined_df, "res/ppk23IPIs_females_interaction_index_coeffs.csv")
+combined_df$analysis <- "simple"
+write.csv(combined_df, "res/ppk23_females_interaction_index_coeffs.csv")
