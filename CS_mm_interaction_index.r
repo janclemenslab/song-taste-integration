@@ -1,10 +1,9 @@
-# setwd("W:/apalaci/code/MSI_paper/r_glm_scripts")
 library(glmmTMB)
 
 # load data
-soc.data <- read.csv(file = "dat/CS_mmmf_SH.csv", header = T, stringsAsFactors = T) # USING ALL DATA, NOT ONLY ANNOTATED UWE/BWE DATA
+soc.data <- read.csv(file = "dat/CS_all.csv", header = T, stringsAsFactors = T) # USING ALL DATA, NOT ONLY ANNOTATED UWE/BWE DATA
 
-# select non-NA and corresponding sex
+# select corresponding conditions and exclude NaNs
 soc.data <- subset(soc.data, (!is.na(soc.data$interaction_index)) & (soc.data$sex_target == "male"))
 
 # substitute zeros with small number to avoid mathematical errors
@@ -15,7 +14,11 @@ null.soc <- glmmTMB(interaction_index ~ 1, data = soc.data, family = beta_family
 red.soc <- glmmTMB(interaction_index ~ taste + playlist, data = soc.data, family = beta_family)
 full.soc <- glmmTMB(interaction_index ~ taste * playlist, data = soc.data, family = beta_family)
 # model selection
-write.csv(as.data.frame(anova(null.soc, red.soc, full.soc, test = "Chisq")), "res/CSsingle_males_interaction_index_chisq.csv")
+model_selection <- as.data.frame(anova(null.soc, red.soc, full.soc, test = "Chisq"))
+model_selection$strain <- "CS"
+model_selection$y <- "interaction_index"
+model_selection$analysis <- "simple"
+write.csv(model_selection, "res/CS_males_interaction_index_chisq.csv")
 
 # coefficient tables
 null_df <- as.data.frame(summary(null.soc)$coefficients$cond)
@@ -34,4 +37,7 @@ full_df$names <- row.names(full_df)
 row.names(full_df) <- NULL
 
 combined_df <- rbind(null_df, red_df, full_df)
-write.csv(combined_df, "res/CSsingle_males_interaction_index_coeffs_table.csv")
+combined_df$strain <- "CS"
+combined_df$y <- "interaction_index"
+combined_df$analysis <- "simple"
+write.csv(combined_df, "res/CS_males_interaction_index_coeffs.csv")
